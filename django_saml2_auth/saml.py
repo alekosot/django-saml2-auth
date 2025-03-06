@@ -1,5 +1,6 @@
 """Utility functions for various SAML client functions."""
 
+import logging
 import base64
 from typing import Any, Callable, Dict, Mapping, Optional, Union
 
@@ -320,7 +321,18 @@ def decode_saml_response(
         Union[HttpResponseRedirect, Optional[AuthnResponse], None]: Returns an AuthnResponse
             object for extracting user identity from.
     """
+    logging.error(f"SAML2-AUTH request.GET: {request.GET}")
+    logging.error(f"SAML2-AUTH request.POST: {request.POST}")
+    if request.content_type and "multipart" in request.content_type:
+        logging.error(f"SAML2-AUTH request.FILES: {request.FILES}")
+    if hasattr(request, "body"):
+        try:
+            logging.error(f"SAML2-AUTH request.Raw Body: {request.body.decode('utf-8')}")
+        except:
+            logging.error(f"SAML2-AUTH request.Raw Body (bytes): {request.body}")
+
     response = request.POST.get("SAMLResponse") or None
+    logging.error(f"SAML2-AUTH response: {response is None}, {response}")
     if not response:
         raise SAMLAuthError(
             "There was no response from SAML client.",
