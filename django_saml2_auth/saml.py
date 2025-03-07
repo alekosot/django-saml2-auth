@@ -431,15 +431,20 @@ def extract_user_identity(
     saml2_auth_settings = settings.SAML2_AUTH
 
     user_identity: Dict[str, Any] = authn_response.get_identity()  # type: ignore
+    logging.debug(f"SAML2-AUTH extract user_identity: {user_identity}")
 
     email_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.email", default="user.email")
+    logging.debug(f"SAML2-AUTH extract email_field: {email_field}")
     username_field = dictor(saml2_auth_settings, "ATTRIBUTES_MAP.username", default="user.username")
+    logging.debug(f"SAML2-AUTH extract username_field: {username_field}")
     firstname_field = dictor(
         saml2_auth_settings, "ATTRIBUTES_MAP.first_name", default="user.first_name"
     )
+    logging.debug(f"SAML2-AUTH extract firstname_field: {firstname_field}")
     lastname_field = dictor(
         saml2_auth_settings, "ATTRIBUTES_MAP.last_name", default="user.last_name"
     )
+    logging.debug(f"SAML2-AUTH extract lastname_field: {lastname_field}")
 
     user = {}
     user["email"] = dictor(user_identity, f"{email_field}|0", pathsep="|")  # Path includes "."
@@ -459,6 +464,8 @@ def extract_user_identity(
 
     # For backwards compatibility
     user["user_identity"] = user_identity
+
+    logging.debug(f"SAML2-AUTH extract user: {user}")
 
     if not user["email"] and not user["username"]:
         raise SAMLAuthError(

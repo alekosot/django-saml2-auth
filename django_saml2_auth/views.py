@@ -3,6 +3,7 @@
 
 """Endpoints for SAML SSO login"""
 
+import logging
 import urllib.parse as urlparse
 from typing import Optional, Union
 from urllib.parse import unquote
@@ -107,11 +108,14 @@ def acs(request: HttpRequest):
     saml2_auth_settings = settings.SAML2_AUTH
 
     authn_response = decode_saml_response(request, acs)
+    logging.debug(f"SAML2-AUTH authn response: {authn_response}")
     # decode_saml_response() will raise SAMLAuthError if the response is invalid,
     # so we can safely ignore the type check here.
     user = extract_user_identity(authn_response)  # type: ignore
+    logging.debug(f"SAML2-AUTH user: {user}")
 
     next_url = request.session.get("login_next_url")
+    logging.debug(f"SAML2-AUTH next_url: {next_url}")
 
     # A RelayState is an HTTP parameter that can be included as part of the SAML request
     # and SAML response; usually is meant to be an opaque identifier that is passed back
@@ -120,6 +124,7 @@ def acs(request: HttpRequest):
     # If RelayState params is passed, it could be JWT token that identifies the user trying to
     # login via sp_initiated_login endpoint, or it could be a URL used for redirection.
     relay_state = request.POST.get("RelayState")
+    logging.debug(f"SAML2-AUTH relay_state: {relay_state}")
     relay_state_is_token = is_jwt_well_formed(relay_state) if relay_state else False
     if next_url is None and relay_state and not relay_state_is_token:
         next_url = relay_state
@@ -189,7 +194,6 @@ def acs(request: HttpRequest):
             frontend_url = run_hook(custom_frontend_url_trigger, relay_state)  # type: ignore
 
         return HttpResponseRedirect(frontend_url + query)
-
 
     def redirect(redirect_url: Optional[str] = None) -> HttpResponseRedirect:
         """Redirect to the redirect_url or the root page.
